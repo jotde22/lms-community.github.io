@@ -39,10 +39,14 @@ Lyrion Music Server is a fully open source server software to power a wide range
 === ":material-linux: Linux"
     {{ deb }}
 
-    Download the package, then install it with its depencencies using the operating system's package manager `apt`:
+    Download the package, then install it with its depencencies using the operating system's package manager `apt`. To avoid issues with file permission, it is not recommended to download the *.deb file into your $HOME directory. Instead use a general accessible folder, e.g. /tmp/.
 
     ```
     sudo apt install /path/to/lyrionmusicserver_{{ latest.version }}_*.deb
+    ```
+    e.g.:
+    ```
+    sudo apt install /tmp/lyrionmusicserver_{{ latest.version }}_*.deb
     ```
 
     {{ rpm }}
