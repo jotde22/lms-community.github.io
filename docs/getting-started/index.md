@@ -10,12 +10,17 @@ Lyrion Music Server is a fully open source server software to power a wide range
 ## Download and install Lyrion Music Server v{{ latest.version }}
 
 === ":material-microsoft-windows: Windows"
-    !!! note
+    !!! note "Important note for users of Logitech Media Server"
         Lyrion Music Server now comes as a 64-bit application. An existing 32-bit version must be uninstalled before installing the 64-bit version (The LMS 9 installer will do this automatically). Please note that there's no Control Panel app any more, nor a tray icon. Tools like eg. [ServiceTray](https://www.coretechnologies.com/products/ServiceTray/) allow you to easily start/stop the LMS service. [See this document](../reference/migrate-win32-win64.md) if you have to migrate.
 
     {{ win64 }}
 
     Then double click the downloaded package to launch the installation process in a familiar installation assistant.
+
+    !!! info "Code Signing Policy"
+        Free code signing for Windows is provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+        See the [Code Signing Policy](../signing-policy.md) for more information.
 
 
 === ":simple-raspberrypi: Raspberry Pi"
@@ -37,6 +42,10 @@ Lyrion Music Server is a fully open source server software to power a wide range
 
 
 === ":material-linux: Linux"
+    !!! warning "Legacy Perl Versions"
+        If you are using a Perl version older than v5.26 you will have to install the `*_all.deb` version available from the
+        [Other Downloads](../downloads/index.md) section.
+
     {{ deb }}
 
     Download the package, then install it with its depencencies using the operating system's package manager `apt`. To avoid issues with file permission, it is not recommended to download the *.deb file into your $HOME directory. Instead use a general accessible folder, e.g. /tmp/.
@@ -65,6 +74,11 @@ Lyrion Music Server is a fully open source server software to power a wide range
 
 
 === ":material-apple: Apple macOS"
+    !!! hint
+        Mac users please note: we no longer ship a preference pane, but a menu bar item. Please see
+        [How to uninstall the legacy Mac Settings Pane Item](../reference/uninstall-legacy-mac.md) for instructions
+        how to uninstall it.
+
     {{ macos }}
 
     Then double click the downloaded image. Drag the application to the Applications folder. Launch Lyrion Music Server from the Applications folder, then check the menu bar item for Start/Stop options. See [Getting started on macOS](mac-install.md) for Details.

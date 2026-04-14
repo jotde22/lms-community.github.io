@@ -30,22 +30,51 @@ env:
   STATS_JSON: docs/analytics/stats.json
 
 jobs:
+  check-slimserver-commit:
+    name: Check latest slimserver commit
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.restore_commit.outputs.cache-hit != 'true' }}
+    steps:
+      - name: Get latest commit hash from slimserver
+        id: get_commit
+        run: |
+          latest_commit=$(git ls-remote https://github.com/LMS-Community/slimserver.git HEAD | awk '{print $1}')
+          echo "latest_commit=$latest_commit" >> $GITHUB_OUTPUT
+          echo "${{ steps.get_commit.outputs.latest_commit }}" > .slimserver_last_commit
+
+      - name: Cache last known commit hash
+        id: restore_commit
+        uses: actions/cache@v5
+        with:
+          path: .slimserver_last_commit
+          key: slimserver-last-commit-${{ steps.get_commit.outputs.latest_commit }}
 
   get-external-changelog:
     name: Import external data sources
+    needs: check-slimserver-commit
+    if: needs.check-slimserver-commit.outputs.changed == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - name: Install dependencies
+      - name: Install html2md repository and other depedencies
         run: |
           # add repo for html2md
           curl -1sLf 'https://dl.cloudsmith.io/public/suntong/repo/setup.deb.sh' | sudo -E bash
 
-          sudo apt-get update
-          apt-cache policy html2md
-          sudo apt install -y html2md python3-babel
+          if [ "$ACT" == "true" ]; then
+            sudo apt-get update
+            sudo apt install -y html2md python3-babel
+          fi
+
+      - name: Install APT depedencies
+        if: ${{ !env.ACT }}
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: html2md python3-babel
+          version: 1
 
       - name: Checkout documentation
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get changelog and convert to markdown
         run: |
@@ -68,7 +97,7 @@ jobs:
           rm man-to-md.pl
 
       - name: Check out LMS code for strings coverage
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: LMS-Community/slimserver
           path: slimserver
@@ -94,14 +123,23 @@ jobs:
   deploy-mkdocs:
     name: Build website and publish to gh-pages branch
     needs: get-external-changelog
+    if: always()        # run even if previous job failed or was skipped
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.branch }}
 
       - name: Install dependencies
+        if: ${{ !env.ACT }}
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libjson-perl libwww-perl libxml-simple-perl libyaml-perl
+          version: 1
+
+      - name: Install depedencies (ACT mode)
+        if: ${{ env.ACT }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libjson-perl libwww-perl libxml-simple-perl libyaml-perl
@@ -115,6 +153,7 @@ jobs:
           tools/build-plugin-repository.pl > $PLUGIN_TARGET
 
       - name: Get analytics data
+        # if: github.event_name == 'schedule'
         run: |
           tools/get-analytics-data.pl > $STATS_JSON
 
@@ -130,7 +169,7 @@ jobs:
       # evaluate the week number to use in the cache key
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
